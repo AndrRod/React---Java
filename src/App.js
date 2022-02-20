@@ -27,9 +27,32 @@ function App (){
 
   const [inputTexto, setTexto] = useState("");
 
+  const [modalEliminar, setModalEliminar] = useState(false);
+
+  const [datosUser, setDatosUser] = useState("");
+
   const modificarTexto = (l)=>{
     setTexto(l)
   }
+  
+  const setUsuarioDatos = (usuario) =>{
+    setDatosUser(usuario); 
+    console.log(usuario)
+    console.log(datosUser)    
+  }
+  const getUsuarioDatos =()=>{         
+    console.log(datosUser.id, datosUser.email)    
+    return datosUser;
+  }
+
+
+  const modifModalEliminar= ()=>{    
+    if(modalEliminar==false){
+      setModalEliminar(true)
+    }else{setModalEliminar(false)}
+  }
+  const devolverEstadoEliminar= ()=>{return modalEliminar}
+
   
   const peticionGet= async ()=>{
     await axios.get(url)
@@ -65,6 +88,7 @@ function App (){
     // setUsuarios(resultadosBusqueda);
   }
 
+
     
   const filtrarFecha= ()=>{       
     axios.get("http://localhost:8080/usuario/buscarPorFecha/" + inputTexto)
@@ -76,9 +100,23 @@ function App (){
    });   
  }
 
+
+ const eliminarUsuario = (id) => {
+    axios.delete("http://localhost:8080/usuario/" + id)
+      .then(response=>{
+      console.log(response.data);      
+      peticionGet();      
+    }).catch (error =>{
+    console.log(error);
+  })
+};
+
+
   // mandamos a llamar el metodo con useEffect
   useEffect(()=>{
     peticionGet();
+    // getUsuarioDatos();
+    // devolverEstadoEliminar();    
   },[]);  
     return (
       <div className="App"> 
@@ -145,7 +183,7 @@ function App (){
             <td>
               <button className='btn btn-primary'  ><FontAwesomeIcon icon={faEdit}/></button>
               {" "}
-              <button className="btn btn-danger" ><FontAwesomeIcon icon={faTrashAlt}/></button>    
+              <button className="btn btn-danger" ><FontAwesomeIcon icon={faTrashAlt} onClick={()=>{setUsuarioDatos(usuario); getUsuarioDatos(); modifModalEliminar(usuario)}}/></button>    
             </td>   
           </tr>        
         )
@@ -154,6 +192,23 @@ function App (){
         </tbody>
     </Table>  
 
+
+
+         
+     <Modal isOpen={devolverEstadoEliminar()}>       
+       <ModalBody>
+       
+              {/* {getUsuarioDatos()} */}
+              {/* {this.datosUser.target.value} */}
+             <p>¿Estas seguro que quieres eliminar el usuario {datosUser.email}</p>
+              
+           </ModalBody><ModalFooter>
+               <button className="btn btn-danger" onClick={() => eliminarUsuario(datosUser.id)}>Sí</button>
+               <button className="btn btn-primary" onClick={() => modifModalEliminar()}>No</button>
+            </ModalFooter>
+     </Modal>
+        
+    
 
 
 </div>   
