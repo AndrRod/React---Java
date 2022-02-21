@@ -29,6 +29,8 @@ function App (){
 
   const [modalEliminar, setModalEliminar] = useState(false);
 
+  const [modalAgregarUsuario, setModaAgregarUsuario] = useState(false);
+
   const [datosUser, setDatosUser] = useState("");
 
   const modificarTexto = (l)=>{
@@ -37,8 +39,8 @@ function App (){
   
   const setUsuarioDatos = (usuario) =>{
     setDatosUser(usuario); 
-    console.log(usuario)
-    console.log(datosUser)    
+    console.table(usuario)
+    console.log(datosUser)      
   }
   const getUsuarioDatos =()=>{         
     console.log(datosUser.id, datosUser.email)    
@@ -49,11 +51,68 @@ function App (){
   const modifModalEliminar= ()=>{    
     if(modalEliminar==false){
       setModalEliminar(true)
-    }else{setModalEliminar(false)}
+    }else{
+      setModalEliminar(false)
+      setDatosUser("");
+    }
   }
-  const devolverEstadoEliminar= ()=>{return modalEliminar}
+ 
+
+  const modifModalAgregar= ()=>{    
+    if(modalAgregarUsuario==false){
+      setModaAgregarUsuario(true)
+    }else{
+      setModaAgregarUsuario(false)
+      }
+  }
 
   
+
+  // const ComponentCrearUsuario = () => {
+    const [user, setUser] = useState({
+      id: "",
+      nombre: "",
+      apellido: "",
+      email: "",
+      ciudad: "",
+      provincia: "",
+      pais: "",
+      tipo: "",
+      fechaCreacion: "",
+    });
+
+    
+    const handleSubmitCreacion = async () => {      
+      const userNew = user;
+      console.log(userNew)
+      // const userInput = {id, nombre, apellido, email, ciudad, provincia, pais, tipo, fechaCreacion};
+
+      await axios.post('http://localhost:8080/usuario/', userNew)
+      .then(response=>{
+        console.log(response);
+        modifModalAgregar()
+        peticionGet();
+      });        
+  };
+
+    const handleChangeUsuario = (e) => {
+      setUser({
+        ...user,
+        [e.target.name]: e.target.value})
+    }  
+  
+
+
+  const peticionGetPorId = (id)=>{
+    axios.get("http://localhost:8080/usuario/buscarPorId/" + id)
+    .then(response=>{      
+      setDatosUser(response.data);        
+      // console.log(response.data);
+    }).catch(error=>{
+      console.log(error)
+    })
+  }
+
   const peticionGet= async ()=>{
     await axios.get(url)
     .then(response=>{
@@ -68,6 +127,7 @@ function App (){
     modificarTexto(e.target.value)
     setBusqueda(e.target.value);
     // filtrar(e.target.value);
+    getUsuarioDatos();
   }
   
   const filtrarCiudad= ()=>{       
@@ -105,7 +165,8 @@ function App (){
     axios.delete("http://localhost:8080/usuario/" + id)
       .then(response=>{
       console.log(response.data);      
-      peticionGet();      
+      modifModalEliminar()    
+      peticionGet(); 
     }).catch (error =>{
     console.log(error);
   })
@@ -115,9 +176,18 @@ function App (){
   // mandamos a llamar el metodo con useEffect
   useEffect(()=>{
     peticionGet();
-    // getUsuarioDatos();
-    // devolverEstadoEliminar();    
   },[]);  
+
+  const getLastArrItem = (arr) => { 
+    let lastItem=arr[arr.length-1];  
+    return lastItem; 
+  }           
+  
+  let users = usuarios.map(m=>{return m.id})  
+  const ultimoId = () => { return getLastArrItem(users)}; 
+    
+  
+
     return (
       <div className="App"> 
       {/* // barra nav */}
@@ -150,7 +220,7 @@ function App (){
       </nav>
       {/* // termina barra nav */}
       <br></br>   
-    <button className='btn btn-success' >Agregar usuario</button>
+    <button className='btn btn-success' onClick={()=>{setUsuarioDatos(usuarios); modifModalAgregar()}}>Agregar usuario</button>
     <br></br>   
     
     <br></br>
@@ -181,29 +251,90 @@ function App (){
             <td>{usuario.tipo}</td>
             <td>{usuario.fechaCreacion}</td>
             <td>
-              <button className='btn btn-primary'  ><FontAwesomeIcon icon={faEdit}/></button>
+              <button className='btn btn-primary'><FontAwesomeIcon icon={faEdit} /></button>
               {" "}
-              <button className="btn btn-danger" ><FontAwesomeIcon icon={faTrashAlt} onClick={()=>{setUsuarioDatos(usuario); getUsuarioDatos(); modifModalEliminar(usuario)}}/></button>    
+              <button className="btn btn-danger" onClick={()=>{peticionGetPorId(usuario.id); modifModalEliminar()}}><FontAwesomeIcon icon={faTrashAlt} /></button>    
             </td>   
           </tr>        
-        )
-        }
+        )}
         )}
         </tbody>
     </Table>  
 
 
+       <Modal isOpen={modalAgregarUsuario}>
+     <ModalHeader style={{display: 'float'}}>
+       <button className='btn btn-outline-primary  ' style={{float: 'right'}} onClick={()=>modifModalAgregar()}>x
+         </button>
+     </ModalHeader>
+     <ModalBody>
+       <div className='form-group'>
+         <br/>
+         <label htmlFor="id">Id</label>
+         <input className='form-control' type="text" name="id" id="id"  defaultValue={ultimoId()+1} readOnly/>
+         <br/>
+         {/* <label htmlFor="fechaCreacion">Fecha Creacion</label>
+         <input className='form-control' type="text" name="fechaCreacion" id="fechaCreacion"   value={form.fechaCreacion} readOnly/>
+         <br/> */}
+         <label htmlFor="nombre">Nombre</label>
+         <input className='form-control' type="text" name="nombre" id="nombre"   onChange={(e)=>handleChangeUsuario(e)}/>
+         <br/>
+         <label htmlFor="apellido">Apellido</label>
+         <input className='form-control' type="text" name="apellido" id="apellido"   onChange={(e)=>handleChangeUsuario(e)} />
+         <br/>
+         <label htmlFor="email">Email</label>
+         <input className='form-control' type="text" name="email" id="email"    onChange={(e)=>handleChangeUsuario(e)}/>
+         <br/>
+         <label htmlFor="pais">Pais</label>
+         <input className='form-control' type="text" name="pais" id="pais"  onChange={(e)=>handleChangeUsuario(e)} />
+         <br/>
+         <label htmlFor="provincia">Provincia</label>
+         <input className='form-control' type="text" name="provincia" id="provincia"   onChange={(e)=>handleChangeUsuario(e)}/>
+         <br/>
+         <label htmlFor="ciudad">Ciudad</label>
+         <input className='form-control' type="text" name="ciudad" id="ciudad"   onChange={(e)=>handleChangeUsuario(e)} />
+         <br/>
+         {/* <label htmlFor="tipo">Tipo</label>
+         <input className='form-control' type="text" name="tipo" id="tipo"   */}
+          
+         Tipo
+         <select htmlFor="tipo" name="tipo" id="tipo" className="form-select" onChange={(e)=>handleChangeUsuario(e)} >
+            <option >Elija una Opcion</option>
+             <option  value="OWNER">OWNER</option>
+             <option value="USUARIO">USUARIO</option>
+             <option  value="COLABORADOR">COLABORADOR</option>
+       </select>    
+         <br/>
+      
+         <label htmlFor="password">Contraseña</label>
+         <input className='form-control' type="password" name="password" id="password"   onChange={(e)=>handleChangeUsuario(e)} />
+         {/* {this.state.data.response} */}
+          
+         <br/>
+          
+          
+       </div>
+     </ModalBody>
+     <ModalFooter>
+       {/* {this.state.tipoModal == 'insertar'?           */}
+      {/* //  <button className='btn btn-success'>Insertar</button>: */}
+       <button className='btn btn-primary' onClick={()=>handleSubmitCreacion()}>Insertar</button>          
+      {/* //  } */}
+       <button className='btn btn-danger' onClick={()=>modifModalAgregar()}>Cancelar</button>
+        
+     </ModalFooter>
+   </Modal>
+      
+
 
          
-     <Modal isOpen={devolverEstadoEliminar()}>       
+     <Modal isOpen={modalEliminar}>       
+     {/* devolverEstadoEliminar() */}
        <ModalBody>
-       
-              {/* {getUsuarioDatos()} */}
-              {/* {this.datosUser.target.value} */}
-             <p>¿Estas seguro que quieres eliminar el usuario {datosUser.email}</p>
+             <p>¿Estas seguro que quieres eliminar el usuario {datosUser.email}?</p>
               
            </ModalBody><ModalFooter>
-               <button className="btn btn-danger" onClick={() => eliminarUsuario(datosUser.id)}>Sí</button>
+               <button className="btn btn-danger" onClick={() =>eliminarUsuario(datosUser.id)}>Sí</button>
                <button className="btn btn-primary" onClick={() => modifModalEliminar()}>No</button>
             </ModalFooter>
      </Modal>
